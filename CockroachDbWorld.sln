@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34511.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CockroachDbWorld", "CockroachDbWorld\CockroachDbWorld.csproj", "{695F4F03-56E9-4D84-986F-DA4A0C024EF2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataMax", "DataMax\DataMax.csproj", "{139256F3-0247-4D9F-9EFB-5064AEADFF48}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{695F4F03-56E9-4D84-986F-DA4A0C024EF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{695F4F03-56E9-4D84-986F-DA4A0C024EF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{695F4F03-56E9-4D84-986F-DA4A0C024EF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{695F4F03-56E9-4D84-986F-DA4A0C024EF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{139256F3-0247-4D9F-9EFB-5064AEADFF48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{139256F3-0247-4D9F-9EFB-5064AEADFF48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{139256F3-0247-4D9F-9EFB-5064AEADFF48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{139256F3-0247-4D9F-9EFB-5064AEADFF48}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8F5390AD-DEA5-4BAE-8F72-48544789D13F}
+	EndGlobalSection
+EndGlobal
