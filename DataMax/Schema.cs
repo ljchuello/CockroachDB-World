@@ -103,6 +103,7 @@ namespace DataMax
 
                 // Create
                 TblCreate(tableName, listField);
+                TblAddColumn(tableName, listField);
             }
         }
 
@@ -142,7 +143,7 @@ namespace DataMax
                     ? $"{query}{row.FldName} {row.TypeSqLite} {(row.FldPK ? "primary key" : "")} default {row.Default}, "
                     : $"{query}{row.FldName} {row.TypeSqLite} {(row.FldPK ? "primary key" : "")} default {row.Default});";
             }
-            
+
             // Create
             using (SQLiteConnection db = new SQLiteConnection(_dbFile))
             {
@@ -152,6 +153,57 @@ namespace DataMax
                 sqlCommand.CommandType = CommandType.Text;
                 sqlCommand.CommandText = query;
                 sqlCommand.ExecuteNonQuery();
+            }
+        }
+
+        private void TblAddColumn(string tblName, List<Schema> listField)
+        {
+            // Get table info
+            DataTable dataTable = new DataTable();
+            using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+            {
+                db.Open();
+                SQLiteCommand sqlCommand = new SQLiteCommand();
+                sqlCommand.Connection = db;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandText = $"pragma table_info({tblName});";
+                using (SQLiteDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    dataTable.Load(reader);
+                }
+            }
+
+            // Check
+            foreach (Schema schema in listField)
+            {
+                // Flag
+                bool existe = false;
+
+                // For dt
+                foreach (DataRow dataRow in dataTable.Rows)
+                {
+                    string dtName = $"{dataRow["name"]}";
+                    if (dtName == schema.FldName)
+                    {
+                        existe = true;
+                        break;
+                    }
+                }
+
+                // No existe
+                if (existe == false)
+                {
+                    // Creamos
+                    using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+                    {
+                        db.Open();
+                        SQLiteCommand sqlCommand = new SQLiteCommand();
+                        sqlCommand.Connection = db;
+                        sqlCommand.CommandType = CommandType.Text;
+                        sqlCommand.CommandText = $"ALTER TABLE {tblName} ADD {schema.FldName} {schema.TypeSqLite} default {schema.Default};";
+                        sqlCommand.ExecuteNonQuery();
+                    }
+                }
             }
         }
     }
