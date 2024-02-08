@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using System.Data.SQLite;
 using System.Threading.Tasks;
 
@@ -12,14 +13,17 @@ namespace DataMax.Table
         [SqLiteFld("Id", true, false)]
         public string Id { set; get; } = string.Empty;
 
-        [SqLiteFld("Descripcion", true, false)]
+        [SqLiteFld("Descripcion", false, true)]
         public string Descripcion { set; get; } = string.Empty;
 
-        [SqLiteFld("Edad", true, false)]
+        [SqLiteFld("Edad", false, false)]
         public long Edad { set; get; } = 0;
 
-        [SqLiteFld("Saldo", true, false)]
+        [SqLiteFld("Saldo", false, false)]
         public decimal Saldo { set; get; } = 0;
+
+        [SqLiteFld("AddAt", false, false)]
+        public DateTime AddAt { set; get; } = new DateTime(1900, 01, 01);
 
         public AdmNode(string dbFile)
         {

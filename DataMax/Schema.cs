@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Reflection;
@@ -7,11 +8,23 @@ namespace DataMax
 {
     public class Schema
     {
+        public string FldName { set; get; }
+        public bool FldPK { set; get; }
+        public bool FldIndex { set; get; }
+        public string TypeSqLite { set; get; }
+        public Type TypeDotNet { set; get; }
+        public string Default { set; get; }
+
         string _dbFile;
 
         public Schema(string dbFile)
         {
             _dbFile = dbFile;
+        }
+
+        private Schema()
+        {
+
         }
 
         public void Update()
@@ -43,21 +56,57 @@ namespace DataMax
                 // Set table name
                 string tableName = tblNameAttribute.TblName;
 
-                // Create
-
-                #region Exist = false
-
-                // Creamos
-                if (exist == false)
+                // Campos
+                List<Schema> listField = new List<Schema>();
+                foreach (var property in typeof(T).GetProperties())
                 {
-                    TblCreate(tableName, typeof(T).GetProperties());
+                    SqLiteFld fldAttribute = (SqLiteFld)Attribute.GetCustomAttribute(property, typeof(SqLiteFld));
+                    if (fldAttribute != null)
+                    {
+                        Schema schema = new Schema();
+                        schema.FldName = fldAttribute.FldName;
+                        schema.FldPK = fldAttribute.FldPK;
+                        schema.FldIndex = fldAttribute.FldIndex;
+                        Type dataType = property.PropertyType;
+
+                        switch (Type.GetTypeCode(dataType))
+                        {
+                            case TypeCode.String:
+                                schema.TypeSqLite = "text";
+                                schema.Default = "''";
+                                break;
+
+                            case TypeCode.DateTime:
+                                schema.TypeSqLite = "text";
+                                schema.Default = "-2208971024";
+                                break;
+
+                            case TypeCode.Boolean:
+                            case TypeCode.Int16:
+                            case TypeCode.Int32:
+                            case TypeCode.Int64:
+                                schema.TypeSqLite = "integer";
+                                schema.Default = "0";
+                                break;
+
+                            case TypeCode.Decimal:
+                            case TypeCode.Double:
+                                schema.TypeSqLite = "real";
+                                schema.Default = "0";
+                                break;
+                        }
+
+                        // add
+                        listField.Add(schema);
+                    }
                 }
 
-                #endregion
+                // Create
+                TblCreate(tableName, listField);
             }
         }
 
-        private void TblCreate(string tblName, PropertyInfo[] listField)
+        private void TblCreate(string tblName, List<Schema> listField)
         {
             // Existe
             using (SQLiteConnection db = new SQLiteConnection(_dbFile))
@@ -80,14 +129,29 @@ namespace DataMax
             }
 
             // Creamos
+            string query = $"CREATE TABLE {tblName} (";
 
-            foreach (var property in listField)
+            // For
+            int i = 0;
+            foreach (Schema row in listField)
             {
-                SqLiteFld fldAttribute = (SqLiteFld)Attribute.GetCustomAttribute(property, typeof(SqLiteFld));
-                if (fldAttribute != null)
-                {
-                    Console.Write("");
-                }
+                // +1
+                i++;
+
+                query = i != listField.Count
+                    ? $"{query}{row.FldName} {row.TypeSqLite} {(row.FldPK ? "primary key" : "")} default {row.Default}, "
+                    : $"{query}{row.FldName} {row.TypeSqLite} {(row.FldPK ? "primary key" : "")} default {row.Default});";
+            }
+            
+            // Create
+            using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+            {
+                db.Open();
+                SQLiteCommand sqlCommand = new SQLiteCommand();
+                sqlCommand.Connection = db;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandText = query;
+                sqlCommand.ExecuteNonQuery();
             }
         }
     }
