@@ -22,12 +22,6 @@ namespace DataMax.Table
         [SqLiteFld("Saldo", false, false)]
         public decimal Saldo { set; get; } = 0;
 
-        [SqLiteFld("AddAt", false, false)]
-        public DateTime AddAt { set; get; } = new DateTime(1900, 01, 01);
-
-        [SqLiteFld("NroIteraciones", false, false)]
-        public int NroIteraciones { set; get; } = 0;
-
         public AdmNode(string dbFile)
         {
             _dbFile = dbFile;

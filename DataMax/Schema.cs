@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace DataMax
 {
@@ -104,6 +105,7 @@ namespace DataMax
                 // Create
                 TblCreate(tableName, listField);
                 TblAddColumn(tableName, listField);
+                TblRemoveColumn(tableName, listField);
             }
         }
 
@@ -201,6 +203,49 @@ namespace DataMax
                         sqlCommand.Connection = db;
                         sqlCommand.CommandType = CommandType.Text;
                         sqlCommand.CommandText = $"ALTER TABLE {tblName} ADD {schema.FldName} {schema.TypeSqLite} default {schema.Default};";
+                        sqlCommand.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
+        private void TblRemoveColumn(string tblName, List<Schema> listField)
+        {
+            // Get table info
+            DataTable dataTable = new DataTable();
+            using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+            {
+                db.Open();
+                SQLiteCommand sqlCommand = new SQLiteCommand();
+                sqlCommand.Connection = db;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandText = $"pragma table_info({tblName});";
+                using (SQLiteDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    dataTable.Load(reader);
+                }
+            }
+
+            // Check
+            foreach (DataRow dataRow in dataTable.Rows)
+            {
+                // Name
+                string dtName = $"{dataRow["name"]}";
+
+                // Flag
+                bool existe = listField.Exists(x => x.FldName == dtName);
+
+                // Check
+                if (existe == false)
+                {
+                    // Borramos la columna
+                    using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+                    {
+                        db.Open();
+                        SQLiteCommand sqlCommand = new SQLiteCommand();
+                        sqlCommand.Connection = db;
+                        sqlCommand.CommandType = CommandType.Text;
+                        sqlCommand.CommandText = $"ALTER TABLE {tblName} DROP COLUMN {dtName};";
                         sqlCommand.ExecuteNonQuery();
                     }
                 }
