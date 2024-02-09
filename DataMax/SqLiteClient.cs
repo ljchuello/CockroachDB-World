@@ -1,4 +1,6 @@
-﻿using System.Data.SQLite;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
 using System.IO;
 using DataMax.Table;
 
@@ -33,5 +35,29 @@ namespace DataMax
         }
 
         public AdmNode AdmNode { get; private set; }
+
+        public string Select<T>()
+        {
+            var tblNameAttribute = (SqLiteTlb)Attribute.GetCustomAttribute(typeof(T), typeof(SqLiteTlb));
+
+            List<string> list = new List<string>();
+            foreach (var property in typeof(T).GetProperties())
+            {
+                SqLiteFld fldAttribute = (SqLiteFld)Attribute.GetCustomAttribute(property, typeof(SqLiteFld));
+                list.Add(fldAttribute.FldName);
+            }
+
+            return $"SELECT {string.Join(", ", list)} FROM {tblNameAttribute.TblName}";
+        }
+
+        public void Info(dynamic obj)
+        {
+            // Obtener el tipo del objeto dinámico
+            Type objectType = obj.GetType();
+
+            // Obtener el nombre de la tabla a partir del atributo personalizado SqLiteTlb
+            var tblNameAttribute = (SqLiteTlb)Attribute.GetCustomAttribute(objectType, typeof(SqLiteTlb));
+            string tableName = tblNameAttribute.TblName;
+        }
     }
 }

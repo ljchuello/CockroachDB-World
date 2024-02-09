@@ -1,9 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Data.SQLite;
-using System.Threading.Tasks;
-
-namespace DataMax.Table
+﻿namespace DataMax.Table
 {
     [SqLiteTlb("Node")]
     public class AdmNode
@@ -19,12 +14,17 @@ namespace DataMax.Table
         [SqLiteFld("Edad", false, false)]
         public long Edad { set; get; } = 0;
 
-        [SqLiteFld("Saldo", false, false)]
+        [SqLiteFld("Saldo", false, true)]
         public decimal Saldo { set; get; } = 0;
 
         public AdmNode(string dbFile)
         {
             _dbFile = dbFile;
+        }
+
+        public AdmNode()
+        {
+
         }
     }
 }

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Linq;
 using System.Reflection;
-using System.Xml.Linq;
 
 namespace DataMax
 {
@@ -104,8 +104,14 @@ namespace DataMax
 
                 // Create
                 TblCreate(tableName, listField);
-                TblAddColumn(tableName, listField);
-                TblRemoveColumn(tableName, listField);
+
+                // Remove
+                TblIndexRemove(tableName, listField);
+                TblColumnRemove(tableName, listField);
+
+                // Add
+                TblColumnAdd(tableName, listField);
+                TblIndexAdd(tableName, listField);
             }
         }
 
@@ -158,7 +164,7 @@ namespace DataMax
             }
         }
 
-        private void TblAddColumn(string tblName, List<Schema> listField)
+        private void TblColumnAdd(string tblName, List<Schema> listField)
         {
             // Get table info
             DataTable dataTable = new DataTable();
@@ -209,7 +215,7 @@ namespace DataMax
             }
         }
 
-        private void TblRemoveColumn(string tblName, List<Schema> listField)
+        private void TblColumnRemove(string tblName, List<Schema> listField)
         {
             // Get table info
             DataTable dataTable = new DataTable();
@@ -246,6 +252,155 @@ namespace DataMax
                         sqlCommand.Connection = db;
                         sqlCommand.CommandType = CommandType.Text;
                         sqlCommand.CommandText = $"ALTER TABLE {tblName} DROP COLUMN {dtName};";
+                        sqlCommand.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
+        private void TblIndexRemove(string tblName, List<Schema> listField)
+        {
+            DataTable dataTable = new DataTable();
+
+            #region DROP INDEX DUPLEX
+
+            using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+            {
+                db.Open();
+                SQLiteCommand sqlCommand = new SQLiteCommand();
+                sqlCommand.Connection = db;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandText = $"SELECT l.name" +
+                                         $"\nFROM pragma_index_list('{tblName}') AS l" +
+                                         $"\nLEFT JOIN" +
+                                         $"\npragma_index_info(l.name) AS d" +
+                                         $"\nWHERE seqno > 0 AND origin != 'pk'" +
+                                         $"\nGROUP BY l.name";
+                using (SQLiteDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    dataTable = new DataTable();
+                    dataTable.Load(reader);
+                }
+            }
+
+            // For dt
+            foreach (DataRow dataRow in dataTable.Rows)
+            {
+                string dtName = $"{dataRow["name"]}";
+                using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+                {
+                    db.Open();
+                    SQLiteCommand sqlCommand = new SQLiteCommand();
+                    sqlCommand.Connection = db;
+                    sqlCommand.CommandType = CommandType.Text;
+                    sqlCommand.CommandText = $"drop index {dtName};";
+                    sqlCommand.ExecuteNonQuery();
+                }
+            }
+
+            #endregion
+
+            #region DROP INDEX (DELETE)
+
+            using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+            {
+                db.Open();
+                SQLiteCommand sqlCommand = new SQLiteCommand();
+                sqlCommand.Connection = db;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandText = $"SELECT l.name AS 'IndexName', d.name AS 'IndexField', l.origin AS 'IndexType'" +
+                                         $"\nFROM pragma_index_list('{tblName}') AS l" +
+                                         $"\nLEFT JOIN" +
+                                         $"\npragma_index_info(l.name) AS d" +
+                                         $"\nWHERE origin != 'pk'";
+                using (SQLiteDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    dataTable = new DataTable();
+                    dataTable.Load(reader);
+                }
+            }
+
+            // For dt
+            foreach (DataRow dataRow in dataTable.Rows)
+            {
+                // Name
+                string dtIndexField = $"{dataRow["IndexField"]}";
+                string dtIndexName = $"{dataRow["IndexName"]}";
+
+                // Flag
+                bool existe = listField.Exists(x => x.FldName == dtIndexField);
+
+                // Check
+                if (existe == false)
+                {
+                    // Borramos la columna
+                    using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+                    {
+                        db.Open();
+                        SQLiteCommand sqlCommand = new SQLiteCommand();
+                        sqlCommand.Connection = db;
+                        sqlCommand.CommandType = CommandType.Text;
+                        sqlCommand.CommandText = $"drop index {dtIndexName};";
+                        sqlCommand.ExecuteNonQuery();
+                    }
+                }
+            }
+
+            #endregion
+        }
+
+        private void TblIndexAdd(string tblName, List<Schema> listField)
+        {
+            DataTable dataTable = new DataTable();
+
+            // Get
+            using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+            {
+                db.Open();
+                SQLiteCommand sqlCommand = new SQLiteCommand();
+                sqlCommand.Connection = db;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.CommandText = $"SELECT l.name AS 'IndexName', d.name AS 'IndexField', l.origin AS 'IndexType'" +
+                                         $"\nFROM pragma_index_list('{tblName}') AS l" +
+                                         $"\nLEFT JOIN" +
+                                         $"\npragma_index_info(l.name) AS d" +
+                                         $"\nWHERE origin != 'pk'";
+                using (SQLiteDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    dataTable = new DataTable();
+                    dataTable.Load(reader);
+                }
+            }
+
+            // Check
+            foreach (Schema schema in listField.Where(x => x.FldIndex))
+            {
+                // Flag
+                bool existe = false;
+
+                // For dt
+                foreach (DataRow dataRow in dataTable.Rows)
+                {
+                    string dtIndexField = $"{dataRow["IndexField"]}";
+
+                    if (dtIndexField == schema.FldName)
+                    {
+                        existe = true;
+                        break;
+                    }
+                }
+
+                // No existe
+                if (existe == false)
+                {
+                    // Creamos
+                    using (SQLiteConnection db = new SQLiteConnection(_dbFile))
+                    {
+                        db.Open();
+                        SQLiteCommand sqlCommand = new SQLiteCommand();
+                        sqlCommand.Connection = db;
+                        sqlCommand.CommandType = CommandType.Text;
+                        sqlCommand.CommandText = $"CREATE INDEX {tblName}_{schema.FldName}_Index ON {tblName} ({schema.FldName});";
                         sqlCommand.ExecuteNonQuery();
                     }
                 }
