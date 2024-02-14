@@ -1,5 +1,5 @@
-﻿using DataMax;
-using DataMax.Table;
+﻿using CockroachDbWorld.Data;
+using DataMax;
 
 namespace CockroachDbWorld
 {
@@ -14,10 +14,13 @@ namespace CockroachDbWorld
         {
             SqLiteClient db = new SqLiteClient("C:\\Users\\LJChuello\\OneDrive\\db.db", true);
 
-            AdmNode _admNode = new AdmNode("abc13");
-            _admNode = new AdmNode();
+            AdmNode _admNode = new AdmNode();
+            _admNode.Id = $"{Guid.NewGuid()}";
+            _admNode.Descripcion = "Leonardo Chuello";
+            _admNode.Edad = 15;
+            _admNode.Saldo = 2.22m;
 
-            db.Info(_admNode);
+            db.Insert(_admNode);
         }
     }
 }

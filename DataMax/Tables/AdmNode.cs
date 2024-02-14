@@ -1,10 +1,10 @@
-﻿namespace DataMax.Table
+﻿using System;
+
+namespace DataMax.Tables
 {
     [SqLiteTlb("Node")]
     public class AdmNode
     {
-        private readonly string _dbFile;
-
         [SqLiteFld("Id", true, false)]
         public string Id { set; get; } = string.Empty;
 
@@ -17,14 +17,7 @@
         [SqLiteFld("Saldo", false, true)]
         public decimal Saldo { set; get; } = 0;
 
-        public AdmNode(string dbFile)
-        {
-            _dbFile = dbFile;
-        }
-
-        public AdmNode()
-        {
-
-        }
+        [SqLiteFld("AddAt", false, true)]
+        public DateTime AddAt { set; get; } = new DateTime(1900, 01, 01);
     }
 }
